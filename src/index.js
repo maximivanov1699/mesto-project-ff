@@ -3,16 +3,17 @@ import { closeModal, openModal } from './components/modal';
 import './styles/index.css';
 import { createCard, isLiked, updateLike } from './components/card';
 import { enableValidation} from './components/validation';
-import { addNewCard, editProfileAvatar, editProfileInfo, getAllCards, getUserInfo, handleDeleteCard, handleDislikeCard, handleLikeCard, userData } from './components/api';
+import { addNewCard, editProfileAvatar, editProfileInfo, getAllCards, getUserInfo, handleDeleteCard, handleDislikeCard, handleLikeCard} from './components/api';
 
+const userData = {_id:''}
 
 // @todo: DOM узлы
 const listContainer = document.querySelector('.places__list');
 const addButton = document.querySelector('.profile__add-button');
 const editButton = document.querySelector('.profile__edit-button');
-const newPopup = document.querySelector('.popup_type_new-card');
-const editPopup = document.querySelector('.popup_type_edit');
-const linkInput = document.querySelector('.popup__input_type_link');
+const popupTypeNewCard = document.querySelector('.popup_type_new-card');
+const popupTypeEdit = document.querySelector('.popup_type_edit');
+const inputTypeLink = document.querySelector('.popup__input_type_link');
 const closeButtons = document.querySelectorAll('.popup__close');
 const profileTitle = document.querySelector('.profile__title');
 const profileDescr = document.querySelector('.profile__description');
@@ -21,12 +22,20 @@ const popups = document.querySelectorAll('.popup');
 const inputCardName = document.querySelector('.popup__input_type_card-name');
 const inputTypeUrl = document.querySelector('.popup__input_type_url');
 const openPopup = document.querySelector('.popup_is-opened');
-const imagePopup = document.querySelector('.popup_type_image');
+const popupTypeImage = document.querySelector('.popup_type_image');
 const popupImageElement = document.querySelector('.popup__image');
 const profileImageContainer = document.querySelector('.profile__image-container');
-const editAvatarPopup = document.querySelector('.popup_type_edit-avatar');
-const editAvatarForm = document.forms["edit-avatar"];
+const popupTypeAvatar = document.querySelector('.popup_type_edit-avatar');
+const formTypeAvatar = document.forms["edit-avatar"];
 const popupCaptionElement = document.querySelector('.popup__caption');
+const config = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__error_visible'
+}
 
 //Форма редактирования
 const profileForm = document.forms["edit-profile"];
@@ -39,21 +48,24 @@ Promise.all([getUserInfo(), getAllCards()]).then(([userInfo, cards]) => {
   createProfile(userInfo);
   renderCards(cards);
 })
+.catch((error) => {
+  console.log(error);
+})
 
 //Добавления слушателя по клику, для открытия модального окна
 addButton.addEventListener('click', function() {
-  openModal(newPopup);
+  openModal(popupTypeNewCard);
 });
 
 editButton.addEventListener('click', function() {
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileDescr.textContent;
-  openModal(editPopup);
+  openModal(popupTypeEdit);
 });
 
 // Открытие по клику на аватар
 profileImageContainer.addEventListener('click', function() {
-  openModal(editAvatarPopup);
+  openModal(popupTypeAvatar);
 })
 
 //Добавление цикла с слушателем для закрытия модальных окон по кнопке
@@ -76,7 +88,10 @@ function handleProfileFormSubmit(evt) {
   editProfileInfo({name, about})
   .then((data) => {
     createProfile(data);
-    closeModal(editPopup);
+    closeModal(popupTypeEdit);
+  })
+  .catch((error) => {
+    console.log(error);
   })
   .finally(() => {
     changeButtonStatus(profileForm, false)
@@ -85,28 +100,31 @@ function handleProfileFormSubmit(evt) {
 
 function editAvatarFormSubmit(evt) {
   evt.preventDefault();
-  const avatar = linkInput.value;
+  const avatar = inputTypeLink.value;
   console.log(avatar)
   // отправляем запрос на редактирование профиля
   // после получения ответа, обновляем профиль
-  changeButtonStatus(editAvatarForm, true)
+  changeButtonStatus(formTypeAvatar, true)
   editProfileAvatar({avatar})
   .then((data) => {
     createProfile(data);
     closeModal(editAvatarPopup);
   })
+  .catch((error) => {
+    console.log(error);
+  })
   .finally(() => {
-    changeButtonStatus(editAvatarForm, false)
+    changeButtonStatus(formTypeAvatar, false)
   })
 };
 
 profileForm.addEventListener('submit', handleProfileFormSubmit);
-editAvatarForm.addEventListener('submit', editAvatarFormSubmit);
+formTypeAvatar.addEventListener('submit', editAvatarFormSubmit);
 
 function renderCards(arr) {
   // @todo: Вывести карточки на страницу
 for(let i = 0; i < arr.length; i++) {
-  const newCard = createCard(arr[i], handleImageClick, deleteCard, handleLikeClick)
+  const newCard = createCard(arr[i], handleImageClick, deleteCard, handleLikeClick, userData._id)
   listContainer.append(newCard)
 }
 }
@@ -122,10 +140,13 @@ formCard.addEventListener('submit', function(evt) {
   changeButtonStatus(formCard, true)
   addNewCard({name, link})
   .then((data) => {
-    const newCard = createCard(data, handleImageClick, deleteCard, handleLikeClick);
+    const newCard = createCard(data, handleImageClick, deleteCard, handleLikeClick, userData._id);
     listContainer.prepend(newCard);
     formCard.reset(); // clean form
-    closeModal(newPopup);
+    closeModal(popupTypeNewCard);
+  })
+  .catch((error) => {
+    console.log(error);
   })
   .finally(() => {
     changeButtonStatus(formCard, false)
@@ -141,12 +162,12 @@ function handleImageClick(card) {
   popupImageElement.src = card.link;
   popupImageElement.alt = card.name;
   popupCaptionElement.textContent = card.name;
-  openModal(imagePopup);
+  openModal(popupTypeImage);
 }
 
 
 // Валидация
-enableValidation();
+enableValidation(config);
 
 // Функция обновления данных профиля
 function createProfile(data) {
@@ -160,6 +181,9 @@ function deleteCard(card, id) {
   handleDeleteCard(id)
   .then(() => {
       card.remove();
+    })
+    .catch((error) => {
+      console.log(error);
     })
   }
 
@@ -179,6 +203,9 @@ function removeLike(card) {
     .then((data) => {
       updateLike(card, data)
     })
+    .catch((error) => {
+      console.log(error);
+    })
   }
 
 function putLike(card) {
@@ -186,6 +213,9 @@ function putLike(card) {
     .then((data) => {
       console.log(data)
       updateLike(card, data)
+    })
+    .catch((error) => {
+      console.log(error);
     })
   }
 

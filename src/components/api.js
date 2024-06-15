@@ -6,22 +6,19 @@ const config = {
   }
 }
 
-const userData = {name:'', about:'', avatar:'', _id:''}
-
 // fetch запрос
-const handleFetch = (path, method, body) => {
+function handleFetch(path, method, body) {
   return fetch(`${config.url}${path}`, {
     method, body:JSON.stringify(body),
-    headers: config.headers
+    headers:config.headers
   })
-  .then(res => res.json())
-  .then((result) => {
-    console.log(result);
-    return result;
-  })
-  .catch((error) => {
-    console.log(error);
-  })
+  // обработка ответа
+  .then(res => {
+    if (res.ok) {
+      return res.json();
+  }
+  return Promise.reject(`Ошибка ${res.status}`);
+  })
 }
 
 // получаем информацию о пользователе
@@ -60,6 +57,6 @@ function editProfileAvatar(data) {
 
 export {
   getUserInfo, getAllCards, editProfileInfo, addNewCard, handleDeleteCard, handleLikeCard,
-  handleDislikeCard, editProfileAvatar, userData
+  handleDislikeCard, editProfileAvatar
 }
 

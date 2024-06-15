@@ -1,15 +1,14 @@
-import { userData } from "./api";
 
 // @todo: Темплейт карточки
 const templateCard = document.querySelector('#card-template').content.querySelector('.card');
 
 
 // @todo: Функция создания карточки
-export function createCard(card, handleImageClick, deleteCard, addLike) {
+export function createCard(card, handleImageClick, deleteCard, addLike, id) {
   const newCard = templateCard.cloneNode(true);
   const deleteButton = newCard.querySelector('.card__delete-button');
   newCard.setAttribute('id', card._id);
-  if(card.owner._id != userData._id) {
+  if(card.owner._id != id) {
     deleteButton.remove()
   }
   else {
@@ -31,7 +30,7 @@ export function createCard(card, handleImageClick, deleteCard, addLike) {
   likeButton.addEventListener('click', function(){
     addLike(newCard)
   });
-  if(card.likes.find((item) => item._id === userData._id)) {
+  if(card.likes.find((item) => item._id === id)) {
     likeButton.classList.add('card__like-button_is-active')
   }
   const likeCounter = newCard.querySelector('.card__like-counter');

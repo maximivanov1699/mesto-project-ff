@@ -1,10 +1,10 @@
-.popup__button__not__active {
+.popup__button_disabled {
   color: rgba(0, 0, 0, 0.3);
   background-color: transparent;
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
-.popup__button__not__active:hover {
+.popup__button_disabled:hover {
   color: rgba(255, 255, 255, 1);
   border: none;
 }
